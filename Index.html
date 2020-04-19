@@ -1,0 +1,204 @@
+<!doctype html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="author" content="Paul Lewis" />
+  <meta name="viewport" content="width=device-width">
+  <title></title>
+  <style>
+    html,
+    body {
+      padding: 0;
+      margin: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="container"></div>
+  <script src="js/build/three.min.js"></script>
+  <script src="js/loaders/ColladaLoader.js"></script>
+  <script src="js/Detector.js"></script>
+  <script src="js/libs/stats.min.js"></script>
+  <script>
+    // Set the scene size.
+    const WIDTH = window.innerWidth;
+    const HEIGHT = window.innerHeight;
+
+    // Set some camera attributes.
+    const VIEW_ANGLE = 45;
+    const ASPECT = WIDTH / HEIGHT;
+    const NEAR = 0.1;
+    const FAR = 10000;
+
+    // Get the DOM element to attach to
+    const container =
+      document.querySelector('#container');
+
+    // Create a WebGL renderer, camera
+    // and a scene
+    const renderer = new THREE.WebGLRenderer();
+    const camera =
+      new THREE.PerspectiveCamera(
+        VIEW_ANGLE,
+        ASPECT,
+        NEAR,
+        FAR
+      );
+
+    const scene = new THREE.Scene();
+
+    // Add the camera to the scene.
+    scene.add(camera);
+
+    // Start the renderer.
+    renderer.setSize(WIDTH, HEIGHT);
+
+    // Attach the renderer-supplied
+    // DOM element.
+    container.appendChild(renderer.domElement);
+
+    // create a point light
+    const pointLight =
+      new THREE.PointLight(0xFFFFFF);
+
+    // set its position
+    pointLight.position.x = 10;
+    pointLight.position.y = 50;
+    pointLight.position.z = 130;
+
+    // add to the scene
+    scene.add(pointLight);
+
+    // AJOUT LUMIERE DIRECTIONNELLE
+
+    var ambientLight = new THREE.AmbientLight(0xcccccc, 0.4);
+    scene.add(ambientLight);
+    var directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(1, -1, 0).normalize();
+    scene.add(directionalLight);
+
+    // create the sphere's material
+    const sphereMaterial =
+      new THREE.MeshLambertMaterial(
+        {
+          color: 0xCC00FF
+        });
+
+    // Set up the sphere vars
+    const RADIUS = 50;
+    //const SEGMENTS = 16;
+    const SEGMENTS = 32;
+    //const RINGS = 16;
+    const RINGS = 32;
+
+    // Create a new mesh with
+    // sphere geometry - we will cover
+    // the sphereMaterial next!
+
+    // CREATION D'UN MESH DIFFERENT
+
+    const sphere = new THREE.Mesh(
+      new THREE.TorusGeometry(RADIUS, RADIUS / 3, SEGMENTS, RINGS),
+      sphereMaterial);
+
+    //new THREE.BoxBufferGeometry( 100, 100, 100 ),
+    //new THREE.DodecahedronGeometry( 100 ),
+    //new THREE.SphereGeometry(RADIUS, SEGMENTS, RINGS),
+
+
+    // Move the Sphere back in Z so we
+    // can see it.
+    sphere.position.z = -300;
+
+    // AJOUT D'UN BOOLEEN UTILISE DS FONCTION "update"
+
+    var AvantOuArriere = true;
+
+    // Finally, add the sphere to the scene.
+    scene.add(sphere);
+
+    // Création d'un objet 3D : a
+    let a = new THREE.Object3D();
+    a.scale.set(1, 1, 1);
+    a.position.z = 17; // axe z
+    a.angle = 100;
+
+    sphere.add(a);
+
+    var loadingManager = new THREE.LoadingManager(function () {
+      a.add(pion);
+    });
+
+    var loader = new THREE.ColladaLoader(loadingManager);
+
+    // model.dae importé et paramétrage : pion
+    loader.load('./models/model.dae', function (collada) {
+
+      pion = collada.scene;
+      pion.scale.set(0.15, 0.15, 0.15);
+      pion.rotateX(1.5);
+      pion.add(
+            new THREE.PointLight(color = '#b2d5e0', intensity = 10)
+        );
+      collada.scene.traverse((mesh) => {
+        mesh.material = new THREE.MeshToonMaterial({
+          color: '#b2d5e0'
+        });
+        mesh.material = new THREE.MeshStandardMaterial({
+          map: new THREE.TextureLoader().load('./models/bois.jpg')
+        });
+      });
+    });
+
+    const geometry = new THREE.SphereGeometry(30, 50, 50);
+    const texture = new THREE.TextureLoader().load('https://media.giphy.com/media/xUA7aR6gEChTOAUVaM/giphy.gif')
+    const material = new THREE.MeshBasicMaterial({ map: texture, flatShading: false, transparent: true, opacity: 0.9 });
+    terre = new THREE.Mesh(geometry, material);
+    terre.scale.set(0.15, 0.15, 0.15);
+    terre.position.z = 20; // axe z
+    terre.position.y = 40; // axe des ordonnées
+    terre.angle = 100;
+    a.add(terre);
+
+    function update() {
+      // Draw!
+      renderer.render(scene, camera);
+
+      // Schedule the next frame.
+      requestAnimationFrame(update);
+
+      // ANIMATION AVANT ARRIERE
+      if (AvantOuArriere == true) {
+        if (sphere.position.z < -200)
+          sphere.position.z += 1;
+        else
+          AvantOuArriere = false;
+      }
+      else {
+        if (sphere.position.z > -500)
+          sphere.position.z -= 1;
+        else
+          AvantOuArriere = true;
+      }
+
+      // ROTATION
+      sphere.rotation.x += 0.01;
+      sphere.rotation.y += 0.02;
+      sphere.rotation.z += 0.03;
+
+      a.position.x = Math.cos(THREE.Math.degToRad(a.angle)) * 50;
+      a.position.y = Math.sin(THREE.Math.degToRad(a.angle)) * 50;
+      a.angle += 0.5;
+
+      terre.position.x = Math.cos(THREE.Math.degToRad(terre.angle))* 15;
+      terre.position.y = Math.sin(THREE.Math.degToRad(terre.angle))* 15;
+      terre.angle += 5;
+    }
+
+    // Schedule the first frame.
+    requestAnimationFrame(update);
+  </script>
+</body>
+
+</html>
